@@ -64,5 +64,5 @@
 | 合意の証拠 | quorum | majority、quorum | quorum certificate（QC）、certificate | 署名の集まりか、受け取った票の数か |
 | 正しい参加者 | correct process | non-faulty replica | honest node | crash 故障では「止まっていない」、Byzantine では「規則に従う」 |
 | 一貫性 | agreement | linearizability、strong consistency | safety、consistency | linearizability（単一オブジェクト）と serializability（トランザクション）は別 |
-| 可用性 | termination、wait-freedom | availability | liveness | CAP の availability は「全ての正しいノードが応答する」で、日常の意味より強い |
+| 可用性 | termination、wait-freedom | availability | liveness | CAP の availability は「故障していないノードが受け取った全ての要求が、いずれ応答を得る」で、日常の意味より強い |
 | 複製の変更 | — | membership change、joint consensus | reconfiguration、validator set change | 理論では扱わないことが多い |
