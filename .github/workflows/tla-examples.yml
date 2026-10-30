@@ -1,0 +1,47 @@
+name: TLA+ の雛形
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "skills/tla-plus-model-check/**"
+      - ".github/workflows/tla-examples.yml"
+  pull_request:
+    paths:
+      - "skills/tla-plus-model-check/**"
+      - ".github/workflows/tla-examples.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tlc:
+    name: TLC で雛形と Paxos の例を確かめる
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      JAR: ${{ github.workspace }}/tla2tools.jar
+      ASSETS: skills/tla-plus-model-check/assets
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: tla2tools.jar（v1.7.4）を取る
+        run: curl -fL -o "$JAR" https://github.com/tlaplus/tlaplus/releases/download/v1.7.4/tla2tools.jar
+      - name: Voting.cfg はエラーなし（終了コード 0）
+        run: java -XX:+UseParallelGC -jar "$JAR" -workers auto -metadir /tmp/tlc1 -config "$ASSETS/Voting.cfg" "$ASSETS/Voting.tla"
+      - name: VotingBuggy.cfg は反例あり（終了コード 12）
+        run: |
+          set +e
+          java -XX:+UseParallelGC -jar "$JAR" -workers auto -metadir /tmp/tlc2 -config "$ASSETS/VotingBuggy.cfg" "$ASSETS/Voting.tla" | tee out.txt
+          code=${PIPESTATUS[0]}
+          set -e
+          test "$code" -eq 12 || { echo "::error::終了コードが $code でした（12 のはず）"; exit 1; }
+          grep -q "Invariant Agreement is violated" out.txt
+      - name: Paxos の例（fetch_paxos_example.sh と MCPaxos）
+        run: |
+          bash skills/tla-plus-model-check/scripts/fetch_paxos_example.sh paxos
+          java -XX:+UseParallelGC -jar "$JAR" -workers auto -metadir /tmp/tlc3 -config paxos/MCPaxos.cfg paxos/MCPaxos.tla

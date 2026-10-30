@@ -1,0 +1,6 @@
+latency_us,start_us,ok
+10000,0,true
+12000,1000000,true
+16000,2000000,true
+14000,3000000,true
+20000,4000000,true

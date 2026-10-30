@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-skills:
+    name: Agent Skills 仕様の検証
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: skills-ref を入れる
+        run: pip install "skills-ref @ git+https://github.com/agentskills/agentskills.git#subdirectory=skills-ref"
+      - name: skills-ref validate
+        run: |
+          fail=0
+          for d in skills/*/; do
+            if ! out=$(skills-ref validate "$d" 2>&1); then
+              fail=1
+              echo "::error file=${d}SKILL.md::$(echo "$out" | tr '\n' ' ')"
+            fi
+            echo "$out"
+          done
+          exit $fail
+      - name: SKILL.md の行数
+        run: |
+          for f in skills/*/SKILL.md; do
+            n=$(wc -l < "$f")
+            if [ "$n" -gt 500 ]; then echo "::warning file=$f::SKILL.md が ${n} 行あります（目安は500行以内）"; fi
+          done
+
+  npx-skills:
+    name: npx skills で見つかるか
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+      - name: スキルの一覧
+        run: |
+          out=$(npx -y skills@1.7.4 add . --list 2>&1)
+          echo "$out"
+          for d in skills/*/; do
+            name=$(basename "$d")
+            echo "$out" | grep -q "$name" || { echo "::error::npx skills が $name を見つけられませんでした"; exit 1; }
+          done
+
+  rust:
+    name: Rust（MCP サーバーと latstat）
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - name: Rust のツールチェーン
+        run: |
+          rustup toolchain install stable --profile minimal --component clippy,rustfmt
+          rustup default stable
+      - run: cargo fmt --all --check
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+      - run: cargo test --workspace

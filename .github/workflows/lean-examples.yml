@@ -1,0 +1,49 @@
+name: Lean の雛形
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "skills/lean-consensus-proof/**"
+      - ".github/workflows/lean-examples.yml"
+  pull_request:
+    paths:
+      - "skills/lean-consensus-proof/**"
+      - ".github/workflows/lean-examples.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: QuorumExample.lean をビルドする
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - name: elan を入れる
+        run: |
+          curl https://elan.lean-lang.org/elan-init.sh -sSf | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - name: Mathlib のプロジェクトを作る（スキルの手順2と同じ）
+        run: |
+          lake +leanprover/lean4:v4.35.0 new demo math
+          sed -i 's/^weak.linter.mathlibStandardSet = true/weak.linter.mathlibStandardSet = false/' demo/lakefile.toml
+      - name: 雛形を入れてビルドする（スキルの手順3と同じ）
+        working-directory: demo
+        run: |
+          cp ../skills/lean-consensus-proof/assets/QuorumExample.lean Demo/QuorumExample.lean
+          rm -f Demo/Basic.lean
+          printf 'module\n\npublic import Demo.QuorumExample\n' > Demo.lean
+          lake build
+      - name: sorry が残っていないか（スキルの手順6と同じ）
+        working-directory: demo
+        run: |
+          printf 'import Demo\n' > Check.lean
+          for t in Quorum.majority_quorums_intersect Quorum.bft_quorums_share_correct Quorum.decided_values_agree Voting.agreement Voting.decided_stable; do
+            printf '#print axioms %s\n' "$t" >> Check.lean
+          done
+          out=$(lake env lean Check.lean)
+          echo "$out"
+          if echo "$out" | grep -q sorryAx; then echo "::error::sorry が残っています"; exit 1; fi
