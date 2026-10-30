@@ -135,5 +135,6 @@ curl -s "${H[@]}" "$B/paper/DOI:10.1145/3149.214121/references?limit=50&fields=t
 ```
 
 Semantic Scholar が 429 を返し続けて使えないときは、検索と書誌情報の確認だけは OpenAlex（`https://api.openalex.org/works?search=...`）で代えられる。ただし引用の意図（`intents`）や `isInfluential` は取れないので、そのことを回答に書く。
+OpenAlex の題名検索は、探している論文とは別の論文を1件目に返すことがある。返ってきた題名が探している論文と一致するかを確かめてから使う。一致しなければ、その論文は「未確認」として扱う。
 
 サーバーの導入方法は、リポジトリの README と mcp/semantic-scholar/README.md にある。
