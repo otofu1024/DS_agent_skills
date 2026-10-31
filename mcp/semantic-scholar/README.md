@@ -30,8 +30,10 @@ cargo install --git https://github.com/otofu1024/DS_agent_skills ds-semantic-sch
 API キーは https://www.semanticscholar.org/product/api#api-key-form から申請できます。キーがなくても動きますが、全ユーザー共有の枠はすぐ混んで 429 が返ります。
 
 ```bash
-claude mcp add -s user -e SEMANTIC_SCHOLAR_API_KEY=<キー> semantic-scholar -- "$HOME/.cargo/bin/ds-semantic-scholar-mcp"
+claude mcp add -s user semantic-scholar -e SEMANTIC_SCHOLAR_API_KEY=<キー> -- "$HOME/.cargo/bin/ds-semantic-scholar-mcp"
 ```
+
+サーバー名（`semantic-scholar`）は `-e` より前に書いてください。`-e` は値をいくつも受け取るので、後ろに名前を置くと名前まで環境変数の値として扱われ、`missing required argument 'commandOrUrl'` というエラーになります。
 
 キーを含むコマンドは、会話の記録に残らないよう、自分のターミナルで実行してください。登録できたかは `claude mcp list` で確かめられます。
 

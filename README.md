@@ -42,7 +42,7 @@ academic-search は Semantic Scholar の MCP サーバーを使います。サ�
 
 ```bash
 cargo install --git https://github.com/otofu1024/DS_agent_skills ds-semantic-scholar-mcp
-claude mcp add -s user -e SEMANTIC_SCHOLAR_API_KEY=<キー> semantic-scholar -- "$HOME/.cargo/bin/ds-semantic-scholar-mcp"
+claude mcp add -s user semantic-scholar -e SEMANTIC_SCHOLAR_API_KEY=<キー> -- "$HOME/.cargo/bin/ds-semantic-scholar-mcp"
 ```
 
 ### 実験の解析ツール
